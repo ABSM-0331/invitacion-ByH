@@ -23,6 +23,10 @@ function myFunction() {
     document.getElementById("check").checked = false;
 }
 
+function cerrarMenu() {
+    document.getElementById("check").checked = false;
+}
+
 function reveal() {
     var reveals = document.querySelectorAll(".reveal");
 
