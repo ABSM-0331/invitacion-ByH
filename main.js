@@ -111,7 +111,6 @@ fetch("https://api-invitacion.vercel.app/api/invitados")
     .then((response) => response.json())
     .then((data) => {
         familias = data;
-        console.log("Familias cargadas:", familias);
     })
     .catch((error) => {
         console.error("Error al cargar familias:", error);
@@ -149,7 +148,6 @@ function resetState() {
 
 // Buscar familia
 buscarBtn.addEventListener("click", () => {
-    console.log("Buscando familia...");
     const raw = apellidoInput.value.trim().toLowerCase();
     if (raw === "") {
         resetState();
@@ -212,13 +210,11 @@ decBtn.addEventListener("click", () => {
 // FUNCIÓN: generar invitación final bonita con QR incrustado
 async function generarInvitacionFinal(qrData) {
     return new Promise((resolve, reject) => {
-        // Crear contenedor temporal
         const qrContainer = document.createElement("div");
         qrContainer.style.display = "none";
         document.body.appendChild(qrContainer);
 
         try {
-            // Generar QR
             new QRCode(qrContainer, {
                 text: qrData,
                 width: 600,
@@ -228,55 +224,52 @@ async function generarInvitacionFinal(qrData) {
                 correctLevel: QRCode.CorrectLevel.H,
             });
 
-            // Obtener el IMG generado por QRCode.js
-            const qrImg = qrContainer.querySelector("img");
-            console.log("QR generado:", qrImg);
+            // ⬇️ USAR CANVAS (NO IMG)
+            const qrCanvas = qrContainer.querySelector("canvas");
 
-            if (!qrImg) {
+            if (!qrCanvas) {
                 document.body.removeChild(qrContainer);
-                return reject(new Error("No se generó el QR"));
+                return reject(new Error("QR canvas no generado"));
             }
 
-            // Esperar a que el QR termine de cargar
-            qrImg.onload = () => {
-                console.log("adios");
+            const bg = new Image();
+            bg.src = "pase.png";
+
+            bg.onload = () => {
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
 
-                const bg = new Image();
-                bg.src = "pase.png";
+                canvas.width = bg.width;
+                canvas.height = bg.height;
 
-                bg.onload = () => {
-                    canvas.width = bg.width;
-                    canvas.height = bg.height;
-                    ctx.drawImage(bg, 0, 0);
+                ctx.drawImage(bg, 0, 0);
 
-                    const qrSize = 600;
-                    const x = (canvas.width - qrSize) / 2;
-                    const y = ((canvas.height - qrSize) / 3) * 2;
+                const qrSize = 600;
+                const x = (canvas.width - qrSize) / 2;
+                const y = ((canvas.height - qrSize) / 3) * 2;
 
-                    ctx.drawImage(qrImg, x, y, qrSize, qrSize);
+                ctx.drawImage(qrCanvas, x, y, qrSize, qrSize);
 
-                    document.body.removeChild(qrContainer);
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                console.log(qrImg, "hola");
-                bg.onerror = () => {
-                    document.body.removeChild(qrContainer);
-                    reject(new Error("No se pudo cargar pase.png"));
-                };
+                document.body.removeChild(qrContainer);
+                resolve(canvas.toDataURL("image/png"));
             };
 
-            // En caso extremo de error del QR
-            qrImg.onerror = () => {
+            bg.onerror = () => {
                 document.body.removeChild(qrContainer);
-                reject(new Error("Error al generar el QR"));
+                reject(new Error("No se pudo cargar pase.png"));
             };
         } catch (error) {
             document.body.removeChild(qrContainer);
             reject(error);
         }
     });
+}
+
+function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
 // Enviar confirmación
@@ -334,21 +327,61 @@ form.addEventListener("submit", async (e) => {
 
     // Generar invitación personalizada con QR
     let qrTexto = codigo;
-    console.log("Generando invitación para código:", qrTexto);
 
     try {
-        console.log("Generando invitación final...");
         const imgURL = await generarInvitacionFinal(qrTexto);
-        console.log("Invitación generada, iniciando descarga...", imgURL);
 
-        const link = document.createElement("a");
-        link.href = imgURL;
-        link.download = `pase_${familiaSeleccionada.familia}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const fileName = `pase_${familiaSeleccionada.familia}.png`;
 
-        console.log("Descarga completada");
+        // 🖥️ PC → descarga directa
+        if (!isMobile()) {
+            const link = document.createElement("a");
+            link.href = imgURL;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            // 📱 MÓVIL → SweetAlert
+            Swal.fire({
+                icon: "info",
+                title: "Tu pase está listo 🎟️",
+                text: "Guárdalo para presentarlo el día del evento",
+                confirmButtonText: "Descargar pase",
+                showCancelButton: false,
+            }).then(async () => {
+                // 🍎 iOS → compartir / guardar en Fotos
+                if (isIOS()) {
+                    const blob = await fetch(imgURL).then((res) => res.blob());
+                    const file = new File([blob], fileName, {
+                        type: "image/png",
+                    });
+
+                    if (navigator.share) {
+                        await navigator.share({
+                            files: [file],
+                            title: "Pase de boda",
+                            text: "Guarda tu pase 🎉",
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "No compatible",
+                            text: "Tu navegador no permite guardar automáticamente",
+                        });
+                    }
+                }
+                // 🤖 Android → descarga directa con botón
+                else {
+                    const link = document.createElement("a");
+                    link.href = imgURL;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+        }
     } catch (error) {
         console.error("Error al generar invitación:", error);
         Swal.fire({
