@@ -8,7 +8,7 @@
     --h1-size: 6rem;
     --h2-size: 2.1rem;
     --h3-size: 1.7rem;
-    --text-size: 1.3rem;
+    --text-size: 1.5rem;
     --horizontal-margin-spacing: 6rem;
     --grey-color-light: rgba(232, 230, 230, 0.6);
     --grey-color: rgba(232, 230, 230, 1);
@@ -68,6 +68,7 @@ h3 {
 }
 .huge-btn {
     display: block;
+    text-decoration: none;
     font-size: 1rem;
     background: var(--accent);
     color: var(--accent-contrast);
@@ -82,22 +83,7 @@ h3 {
     border-color: var(--accent-dark);
     color: var(--accent-contrast);
 }
-.location-btn {
-    display: inline-block;
-    font-size: 1rem;
-    background: transparent;
-    border: 1px solid var(--accent);
-    padding: 10px 24px;
-    border-radius: 50px;
-    margin-bottom: 2rem;
-    text-decoration: none;
-    color: var(--accent);
-}
-.location-btn:hover {
-    background: var(--accent);
-    color: var(--accent-contrast);
-    border-color: var(--accent);
-}
+
 .v-reposition-container {
     position: absolute;
     left: 0;
@@ -121,6 +107,44 @@ label.logo {
     padding: 0 0 0 30px;
     font-weight: bold;
     color: var(--accent);
+}
+.music-btn {
+    position: absolute;
+    left: 180px;
+    top: 20px;
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--accent);
+}
+.music-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.1);
+}
+.music-btn i {
+    font-size: 20px;
+}
+.music-btn.playing {
+    background: var(--accent);
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
 }
 nav ul {
     float: right;
@@ -261,16 +285,38 @@ nav ul li a:hover {
     justify-content: space-between;
 }
 .home-img {
+    position: relative;
+    overflow: hidden;
     background-image: url(foto1.jpg);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
+
 .home-img-sm {
+    position: relative;
+    overflow: hidden;
     display: none;
     width: 100%;
     margin: 20px 0 0 0;
     height: 50vh;
+}
+
+/* Degradado superior para mezclar con el fondo */
+.degradado::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 140px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 1),
+        rgba(0, 0, 0, 0)
+    );
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* Countdown styles (home) */
@@ -674,7 +720,13 @@ nav ul li a:hover {
         font-size: 0.95rem;
         text-align: center;
     }
-
+    p.alerta {
+        margin-bottom: 1rem;
+        color: #b00020;
+        font-size: 0.9rem;
+        text-align: center;
+        font-weight: 600;
+    }
     label {
         display: block;
         font-size: 0.9rem;
@@ -721,11 +773,9 @@ nav ul li a:hover {
         transition: opacity 0.2s ease;
     }
     .buscar-btn:hover {
-        opacity: 0.7;
-        background: none !important;
+        opacity: 0.8;
     }
     .buscar-btn:active {
-        background: none !important;
         transform: translateY(-50%) scale(0.95);
     }
     .buscar-btn svg {
@@ -733,10 +783,6 @@ nav ul li a:hover {
         height: 24px;
         pointer-events: none;
         display: block;
-    }
-    .buscar-btn:focus {
-        outline: none;
-        opacity: 0.8;
     }
 
     .row {
@@ -808,63 +854,43 @@ nav ul li a:hover {
         box-shadow: 0 4px 14px rgba(163, 100, 143, 0.18);
         transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
-    button:active {
-        transform: translateY(1px);
-    }
-    button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
+}
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
 
-    .hint {
-        font-size: 0.85rem;
-        color: #7a6b73;
-        margin-top: 0.5rem;
-        text-align: center;
-    }
+.hint {
+    font-size: 0.85rem;
+    color: #7a6b73;
+    margin-top: 0.5rem;
+    text-align: center;
+}
 
-    .error {
-        color: #b00020;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-        text-align: center;
-    }
+.error {
+    color: #b00020;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
 
-    #success {
-        display: none;
-    }
+#success {
+    display: none;
+}
 
-    @media (min-width: 640px) {
-        .card {
-            padding: 2.2rem;
-        }
+@media (min-width: 640px) {
+    .card {
+        padding: 2.2rem;
     }
-    /* Quitar controles nativos del input number */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    input[type="number"] {
-        -moz-appearance: textfield;
-    }
-
-    .buscar-btn {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        background: #fff;
-        border: 1px solid rgba(163, 100, 143, 0.25);
-        font-size: 1.1rem;
-        color: var(--accent);
-    }
-    .buscar-btn:hover {
-        background: #f3e9f1;
-    }
+}
+/* Quitar controles nativos del input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 /* Estilos duplicados removidos - ahora están dentro de .seccion-rsvp */

@@ -74,8 +74,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var minsEl = document.getElementById("cd-mins");
     var secsEl = document.getElementById("cd-secs");
 
-    // Set target date: 17 April 2026 (local time at start of day)
-    var target = new Date(2026, 3, 17, 0, 0, 0); // month is 0-indexed (3 = April)
+    // Set target date: 17 April 2026 at 3:00 PM
+    var target = new Date(2026, 3, 17, 15, 0, 0); // month is 0-indexed (3 = April), 15 = 3 PM
 
     function updateCountdown() {
         var now = new Date();
@@ -104,14 +104,18 @@ document.addEventListener("DOMContentLoaded", function () {
     updateCountdown();
     setInterval(updateCountdown, 1000);
 });
+let familias = [];
 
-const familias = {
-    sosa: 4,
-    garcia: 3,
-    martinez: 2,
-    lopez: 5,
-    perez: 2,
-};
+// Cargar familias desde API
+fetch("https://api-invitacion.vercel.app/api/invitados")
+    .then((response) => response.json())
+    .then((data) => {
+        familias = data;
+        console.log("Familias cargadas:", familias);
+    })
+    .catch((error) => {
+        console.error("Error al cargar familias:", error);
+    });
 
 const apellidoInput = document.getElementById("apellido");
 const invitadosInput = document.getElementById("invitados");
@@ -124,11 +128,15 @@ const form = document.getElementById("rsvpForm");
 const successEl = document.getElementById("success");
 const incBtn = document.getElementById("inc");
 const decBtn = document.getElementById("dec");
+const buscarBtn = document.getElementById("buscarBtn");
 
 let currentMax = 0;
+let familiaSeleccionada = null;
 
+// Resetear estado UI
 function resetState() {
     currentMax = 0;
+    familiaSeleccionada = null;
     resultado.style.display = "none";
     invitadosInput.value = 0;
     invitadosInput.disabled = true;
@@ -139,43 +147,44 @@ function resetState() {
     successEl.style.display = "none";
 }
 
+// Buscar familia
 buscarBtn.addEventListener("click", () => {
+    console.log("Buscando familia...");
     const raw = apellidoInput.value.trim().toLowerCase();
     if (raw === "") {
         resetState();
         return;
     }
 
-    if (Object.prototype.hasOwnProperty.call(familias, raw)) {
-        currentMax = familias[raw];
+    const familiaObj = familias.find((f) => f.familia.toLowerCase() === raw);
+
+    if (familiaObj) {
+        familiaSeleccionada = familiaObj;
+        currentMax = Number(familiaObj.num_invitados);
+
         maxValueEl.textContent = currentMax;
         resultado.style.display = "block";
         invitadosInput.disabled = false;
         invitadosInput.max = currentMax;
-        if (Number(invitadosInput.value) > currentMax)
-            invitadosInput.value = currentMax;
-        mensaje.textContent = `Puedes confirmar hasta ${currentMax} invitado${
-            currentMax > 1 ? "s" : ""
-        }.`;
+
+        mensaje.textContent = `Puedes confirmar hasta ${currentMax} invitado(s).`;
         submitBtn.disabled = false;
         errorEl.style.display = "none";
     } else {
         resetState();
-        resultado.style.display = "none";
         mensaje.textContent = "Esta familia no está en la lista de invitados.";
         errorEl.textContent = "La familia no está en la lista.";
         errorEl.style.display = "block";
     }
 });
 
+// Limitar invitados
 invitadosInput.addEventListener("input", () => {
     let val = Number(invitadosInput.value);
-    if (Number.isNaN(val) || val < 0) val = 0;
-    if (currentMax && val > currentMax) {
+
+    if (val > currentMax) {
         invitadosInput.value = currentMax;
-        errorEl.textContent = `No puedes seleccionar más de ${currentMax} invitado${
-            currentMax > 1 ? "s" : ""
-        }.`;
+        errorEl.textContent = `No puedes seleccionar más de ${currentMax} invitado(s).`;
         errorEl.style.display = "block";
         submitBtn.disabled = true;
     } else {
@@ -184,55 +193,192 @@ invitadosInput.addEventListener("input", () => {
     }
 });
 
+// Botón +
 incBtn.addEventListener("click", () => {
-    const max = Number(invitadosInput.max) || 0;
-    let val = Number(invitadosInput.value) || 0;
-    if (max && val < max) val++;
+    let val = Number(invitadosInput.value);
+    if (val < currentMax) val++;
     invitadosInput.value = val;
     invitadosInput.dispatchEvent(new Event("input"));
 });
 
+// Botón -
 decBtn.addEventListener("click", () => {
-    let val = Number(invitadosInput.value) || 0;
+    let val = Number(invitadosInput.value);
     if (val > 0) val--;
     invitadosInput.value = val;
     invitadosInput.dispatchEvent(new Event("input"));
 });
 
-form.addEventListener("submit", (e) => {
+// FUNCIÓN: generar invitación final bonita con QR incrustado
+async function generarInvitacionFinal(qrData) {
+    return new Promise((resolve, reject) => {
+        // Crear contenedor temporal
+        const qrContainer = document.createElement("div");
+        qrContainer.style.display = "none";
+        document.body.appendChild(qrContainer);
+
+        try {
+            // Generar QR
+            new QRCode(qrContainer, {
+                text: qrData,
+                width: 600,
+                height: 600,
+                colorDark: "#4b2e2e",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H,
+            });
+
+            // Obtener el IMG generado por QRCode.js
+            const qrImg = qrContainer.querySelector("img");
+            console.log("QR generado:", qrImg);
+
+            if (!qrImg) {
+                document.body.removeChild(qrContainer);
+                return reject(new Error("No se generó el QR"));
+            }
+
+            // Esperar a que el QR termine de cargar
+            qrImg.onload = () => {
+                console.log("adios");
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                const bg = new Image();
+                bg.src = "pase.png";
+
+                bg.onload = () => {
+                    canvas.width = bg.width;
+                    canvas.height = bg.height;
+                    ctx.drawImage(bg, 0, 0);
+
+                    const qrSize = 600;
+                    const x = (canvas.width - qrSize) / 2;
+                    const y = ((canvas.height - qrSize) / 3) * 2;
+
+                    ctx.drawImage(qrImg, x, y, qrSize, qrSize);
+
+                    document.body.removeChild(qrContainer);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                console.log(qrImg, "hola");
+                bg.onerror = () => {
+                    document.body.removeChild(qrContainer);
+                    reject(new Error("No se pudo cargar pase.png"));
+                };
+            };
+
+            // En caso extremo de error del QR
+            qrImg.onerror = () => {
+                document.body.removeChild(qrContainer);
+                reject(new Error("Error al generar el QR"));
+            };
+        } catch (error) {
+            document.body.removeChild(qrContainer);
+            reject(error);
+        }
+    });
+}
+
+// Enviar confirmación
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const apellido = apellidoInput.value.trim();
+
+    if (!familiaSeleccionada) {
+        errorEl.textContent = "Selecciona una familia válida.";
+        errorEl.style.display = "block";
+        return;
+    }
+
     const invitados = Number(invitadosInput.value);
+    const codigo = familiaSeleccionada.codigo;
 
-    if (!apellido) {
-        errorEl.textContent = "Introduce un apellido.";
-        errorEl.style.display = "block";
-        return;
-    }
-    if (!currentMax) {
-        errorEl.textContent = "Apellido no válido.";
-        errorEl.style.display = "block";
-        return;
-    }
-    if (invitados < 0 || invitados > currentMax) {
-        errorEl.textContent = "Número de invitados inválido.";
-        errorEl.style.display = "block";
-        return;
-    }
+    // NO ASISTIRÁ
+    if (invitados === 0) {
+        await fetch("https://api-invitacion.vercel.app/api/confirmacion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                codigo,
+                confirmacion: "no asistirá",
+            }),
+        });
 
-    // Aquí iría la petición al backend para guardar la confirmación (fetch POST)
-    // Simulamos éxito mostrando un mensaje dentro de la tarjeta
-    errorEl.style.display = "none";
-    successEl.style.display = "block";
-    submitBtn.disabled = true;
+        Swal.fire({
+            icon: "info",
+            title: "¡Gracias por avisar!",
+            text: "Lamentamos que no puedas acompañarnos 🖤",
+        });
 
-    // Después de 2.2s ocultar el mensaje y resetear el formulario
-    setTimeout(() => {
-        successEl.style.display = "none";
         form.reset();
         resetState();
-    }, 2200);
+        return;
+    }
+
+    // SÍ ASISTIRÁ
+    await fetch("https://api-invitacion.vercel.app/api/confirmacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            codigo,
+            invitados_confirmados: invitados,
+            confirmacion: `Asistirá`,
+        }),
+    });
+
+    Swal.fire({
+        icon: "success",
+        title: "¡Gracias por confirmar!",
+        text: "Tu asistencia ha sido registrada.",
+        timer: 2000,
+    });
+
+    // Generar invitación personalizada con QR
+    let qrTexto = codigo;
+    console.log("Generando invitación para código:", qrTexto);
+
+    try {
+        console.log("Generando invitación final...");
+        const imgURL = await generarInvitacionFinal(qrTexto);
+        console.log("Invitación generada, iniciando descarga...", imgURL);
+
+        const link = document.createElement("a");
+        link.href = imgURL;
+        link.download = `pase_${familiaSeleccionada.familia}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log("Descarga completada");
+    } catch (error) {
+        console.error("Error al generar invitación:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudo generar la invitación. Intenta nuevamente.",
+        });
+    }
+
+    form.reset();
+    resetState();
 });
 
-// Inicializar estado
-resetState();
+// Control de música
+const musicBtn = document.getElementById("musicBtn");
+const musicPlayer = document.getElementById("musicPlayer");
+const musicIcon = document.getElementById("musicIcon");
+
+let isPlaying = false;
+
+musicBtn.addEventListener("click", () => {
+    if (isPlaying) {
+        musicPlayer.pause();
+        musicIcon.className = "fas fa-volume-mute";
+        musicBtn.classList.remove("playing");
+        isPlaying = false;
+    } else {
+        musicPlayer.play();
+        musicIcon.className = "fas fa-volume-up";
+        musicBtn.classList.add("playing");
+        isPlaying = true;
+    }
+});

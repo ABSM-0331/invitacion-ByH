@@ -12,8 +12,6 @@
 </head>
 
 <body>
-
-
     <nav>
         <input type="checkbox" id="check">
         <label for="check" class="checkbtn">
@@ -23,10 +21,13 @@
             <span></span>
         </label>
         <label class="logo">B&H</label>
+        <button id="musicBtn" class="music-btn" aria-label="Reproducir música">
+            <i class="fas fa-volume-mute" id="musicIcon"></i>
+        </button>
         <ul class="text">
-            <li><a href="#story" onclick="myFunction()">NUESTRA HISTORIA</a></li>
-            <li><a href="#stay" onclick="myFunction()">VIAJES Y ALOJAMIENTO</a></li>
-            <li><a href="#registry" onclick="myFunction()">PROMESAS</a></li>
+            <li><a href="#story">NUESTRA HISTORIA</a></li>
+            <li><a href="#stay">VIAJES Y ALOJAMIENTO</a></li>
+            <li><a href="#registry">PROMESAS</a></li>
         </ul>
     </nav>
 
@@ -71,7 +72,7 @@
     </div>
 
 
-    <div class="home-img home-img-sm"></div>
+    <div class="home-img home-img-sm degradado"></div>
     <div class="timeline hz-margin reveal">
         <h2>Celebrando Nuestro Amor <br>
             Con Quienes Amamos
@@ -83,7 +84,7 @@
                 <div class="text">Viernes, 17 de Abril del 2026 <br>
                     Salón del Reino de los testigos de jehová</div>
                 <div class="location-actions">
-                    <a class="location-btn" href="https://maps.app.goo.gl/M1EovnEoCFyXNijp6" target="_blank"
+                    <a class="huge-btn" href="https://maps.app.goo.gl/M1EovnEoCFyXNijp6" target="_blank"
                         rel="noopener noreferrer">Ver
                         ubicación</a>
                 </div>
@@ -92,7 +93,7 @@
                     Salón de fiestas "Emperador", Tekax, Yucatán</div>
 
                 <div class="location-actions">
-                    <a class="location-btn" href="https://maps.app.goo.gl/2xbanyNZEb1uAMDRA" target="_blank"
+                    <a class="huge-btn" href="https://maps.app.goo.gl/2xbanyNZEb1uAMDRA" target="_blank"
                         rel="noopener noreferrer">Ver
                         ubicación</a>
                 </div>
@@ -150,7 +151,7 @@
                         <h3>02. <br>
                             Dónde Hospedarse
                         </h3>
-                        <div class="text">Hoteles y B&Bs <br> para visitar</div>
+                        <div class="text">Hoteles para visitar</div>
                         <a href="https://www.google.com/maps/search/Hoteles/@20.2127805,-89.3033421,4037m/data=!3m1!1e3!4m4!2m3!5m2!5m1!1s2025-12-12?entry=ttu&g_ep=EgoyMDI1MTIwOC4wIKXMDSoKLDEwMDc5MjA3M0gBUAM%3D"
                             rel="noopener noreferrer" target="_blank" class="text links">OPCIONES DE ALOJAMIENTO</a>
                     </div>
@@ -191,9 +192,9 @@
                         <div class="transfer-wrapper">
                             <button class="toggle-transfer small-btn" aria-expanded="false">Mostrar tarjeta</button>
                             <div class="transfer-card collapsed" aria-hidden="true">
-                                <p><strong>Banco:</strong> Banamex</p>
-                                <p><strong>Titular:</strong> Benjamin Sosa Mezeta</p>
-                                <p><strong>CLABE / Cuenta:</strong> 0001 2345 6789 0123 456</p>
+                                <p><strong>Banco:</strong>Banco Azteca</p>
+                                <p><strong>Titular:</strong> Benjamin Alejandro Canul Chan</p>
+                                <p><strong>CLABE / Cuenta:</strong>1271 8001 6267 8708 44</p>
                             </div>
                         </div>
                     </div>
@@ -208,16 +209,17 @@
                 <form class="card" id="rsvpForm" novalidate>
                     <header>
                         <h1>Confirmación de asistencia</h1>
+                        <p class="alerta">NOTA: Por favor, confirmar antes del 01 de Abril, de lo contrario se tomara
+                            como no asistencia y se le dara el pase a otra familia.</p>
                         <p class="lead">Confirma tu asistencia ingresando tu apellido.</p>
                     </header>
 
                     <label for="apellido">Apellido de la familia</label>
                     <div class="input-wrapper">
-                        <input id="apellido" name="apellido" type="text" placeholder="Ej: Sosa"
+                        <input id="apellido" name="apellido" type="text" placeholder="Ej: Canul Valle"
                             autocomplete="family-name" required />
-                        <button type="button" id="buscarBtn" class="btn-circle buscar-btn"><svg
-                                xmlns="http://www.w3.org/2000/svg" height="50px" viewBox="0 -960 960 960" width="50px"
-                                fill="#a3648f">
+                        <button type="button" id="buscarBtn" class="buscar-btn"><svg xmlns="http://www.w3.org/2000/svg"
+                                height="50px" viewBox="0 -960 960 960" width="50px" fill="#a3648f">
                                 <path
                                     d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
                             </svg></button>
@@ -295,7 +297,11 @@
             </footer>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <audio id="musicPlayer" loop>
+        <source src="musica.mp3" type="audio/mpeg">
+    </audio>
     <script src="main.js"></script>
 </body>
 
