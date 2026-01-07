@@ -296,6 +296,7 @@ form.addEventListener("submit", async (e) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 codigo,
+                invitados_confirmados: 0,
                 confirmacion: "no asistirá",
             }),
         });
